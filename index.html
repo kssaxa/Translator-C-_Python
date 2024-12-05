@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet"/>
+
+    <title>Translator</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Mulish, sans-serif;
+      }
+      h1 {
+        text-align: center;
+        font-size: clamp(12px, 3vw, 92px);
+      }
+
+      #Items_Wrapper {
+        display: flex;
+        justify-content: center;
+        width: 100vw;
+        height: 50vh;
+      }
+
+      .item {
+        width: 50%;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 20px;
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        font-size: clamp(8px, 1.5vw, 62px);
+        flex-grow: 1;
+      }
+
+      p {
+        margin-top: 10px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .head_item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .head_item button {
+        cursor: pointer;
+        font-size: clamp(8px, 1vw, 48px);
+        font-weight: 600;
+        padding: 3px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+        &:hover {
+          background-color: #ccc;
+        }
+      }
+
+      textarea {
+        flex: 1;
+        width: 100%;
+        resize: none;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      #Items_Wrapper + .item {
+        width: inherit;
+        height: 35vh;
+        flex-grow: 1;
+      }
+      .content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        padding: 20px;
+        text-align: center;
+        font-weight: 700;
+        overflow-y: auto;
+        margin-top: 20px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="content">
+      <h1>Translator С++ &#8594; Python</h1>
+
+      <div id="Items_Wrapper">
+        <div class="item">
+          <div class="head_item">
+            <p>Исходный текст</p>
+            <button type="file" id="open_file_btn">Загрузить файл</button>
+          </div>
+          <textarea id="input_txt" placeholder="C++ code"></textarea>
+        </div>
+
+        <div class="item">
+          <div class="head_item">
+            <p>результат трансляции</p>
+            <button id="download_file_btn">Скачать файл</button>
+          </div>
+          <textarea id="output_txt" placeholder="Python code"></textarea>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="head_item">
+          <button id="translate_btn">Транслировать</button>
+          <p>протокол трансляции</p>
+        </div>
+        <textarea id="log_txt" placeholder="traslate protocol"></textarea>
+      </div>
+    </div>
+  </body>
+<!--
+  <script>
+    const openFileBtn = document.getElementById("open_file_btn");
+    const inputTxt = document.getElementById("input_txt");
+
+    const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.style.display = "none";
+        fileInput.accept = ".cc, .cpp, .cxx, .c, .c++, .h, .hpp, .hh, .hxx, .h++";
+
+    openFileBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          inputTxt.value = e.target.result;
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    const downloadFileBtn = document.getElementById("download_file_btn");
+    const outputTxt = document.getElementById("output_txt");
+
+    downloadFileBtn.addEventListener("click", function () {
+      const content = outputTxt.value;
+
+      const blob = new Blob([content], { type: "text/plain" });
+
+      const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "translated_code.py";
+        link.click();
+    });
+  </script> -->
+  <script src="script.js"></script>
+</html>
