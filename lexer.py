@@ -12,18 +12,19 @@ class Token(NamedTuple):
 # Спецификация токенов для C++
 TOKEN_SPECIFICATION = [
     ("NUMBER", r"\d+(\.\d*)?"),  # Числа
-    ("KEYWORD", r"int|float|if|else|while|for|return"),  # Ключевые слова C++
-    (
-        "IDENTIFIER",
-        r"[a-zA-Z_][a-zA-Z0-9_]*",
-    ),  # Идентификаторы (имена переменных, функций)
-    ("OPERATOR", r"[+\-*/]|==|!=|<=|>=|<|>|="),  # Операторы
+    ("KEYWORD", r"int|float|return|void|bool"),  # Ключевые слова C++
+    ("BLOCK", r"if|else|while|for"),  # Блоки управления
+    ("BOOL", r"true|false"),
+    ("FUNC", r"cin|cout|printf|scanf|getline"),  # Функции ввода/вывода
+    ("IDENTIFIER", r"[a-zA-Z_][a-zA-Z0-9_]*"),  # Идентификаторы (имена переменных, функций)
+    ("OPERATOR", r"\+\+|\-\-|==|!=|<=|>=|<<|>>|=|\+|\-|\*|/|<|>"),  # Операторы
     ("STRING", r"\".*?\"|\'.*?\'"),  # Строки
     ("SEPARATOR", r"[(){},;]"),  # Разделители
     ("COMMENT", r"//.*?$|/\*.*?\*/"),  # Комментарии (однострочные и многострочные)
     ("NEWLINE", r"\n"),  # Перенос строки
     ("SKIP", r"[ \t\r]+"),  # Пропуск пробелов
     ("MISMATCH", r"."),  # Неопределённые токены
+    
 ]
 
 
@@ -56,14 +57,3 @@ def tokenize(code: str):
         tokens.append(Token(kind, value, line_num, column))
 
     return tokens
-
-
-if __name__ == "__main__":
-    
-    cpp_code = 'int main() { int a = 5; float b = 10.0;if (a < b) { return a; } else { return b;} }'
-    try:
-        tokens = tokenize(cpp_code)
-        for token in tokens:
-            print(token)
-    except SyntaxError as e:
-        print(f"Ошибка: {e}")
