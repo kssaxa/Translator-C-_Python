@@ -15,9 +15,9 @@ TOKEN_SPECIFICATION = [
     ("KEYWORD", r"int|float|return|void|bool"),  # Ключевые слова C++
     ("BLOCK", r"if|else|while|for"),  # Блоки управления
     ("BOOL", r"true|false"),
-    ("FUNC", r"cin|cout|printf|scanf|getline"),  # Функции ввода/вывода
+    ("FUNC", r"std::cin|std::cout|std::printf|std::scanf|std::getline"),  # Функции ввода/вывода
     ("IDENTIFIER", r"[a-zA-Z_][a-zA-Z0-9_]*"),  # Идентификаторы (имена переменных, функций)
-    ("OPERATOR", r"\+\+|\-\-|==|!=|<=|>=|<<|>>|=|\+|\-|\*|/|<|>"),  # Операторы
+    ("OPERATOR", r"\+\+|\-\-|==|!=|<=|>=|<<|>>|=|\+|\-|\*|/|<|>|%"),  # Операторы
     ("STRING", r"\".*?\"|\'.*?\'"),  # Строки
     ("SEPARATOR", r"[(){},;]"),  # Разделители
     ("COMMENT", r"//.*?$|/\*.*?\*/"),  # Комментарии (однострочные и многострочные)
