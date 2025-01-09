@@ -67,7 +67,12 @@ class Parser:
                 self.consume('OPERATOR', '=')
                 value_expr = self.parse_expression()
                 self.consume('SEPARATOR', ';')
-                return VariableDeclarationNode(type_token, name_token, value_expr)
+                value_expr.return_type = type_token
+                value_expr.name_variable = name_token
+                if isinstance(value_expr, UseFuncNode):
+                    return value_expr
+                else:
+                    return VariableDeclarationNode(type_token, name_token, value_expr)
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == ';':
                 self.consume('SEPARATOR', ';')
                 return VariableDeclarationNode(type_token, name_token, None)
@@ -232,12 +237,27 @@ class Parser:
             right = self.parse_expression(self.get_precedence(operator.value) + 1)  # увеличиваем приоритет для правой части
             left = BinOperatorNode(operator, left, right)
         return left
+    
 
     # Числа, идентификаторы, строки и тд
     def parse_primary(self):
         current_token = self.current_token()
-        if current_token.type == 'NUMBER' or current_token.type == 'IDENTIFIER':
+        if current_token.type == 'NUMBER':
             return ValueNode(self.consume(current_token.type))
+        elif current_token.type == 'IDENTIFIER':
+            # Если идентификатор, проверяем, является ли это вызовом функции
+            func_name = self.consume('IDENTIFIER')
+            if self.current_token().type == 'SEPARATOR' and self.current_token().value == '(':
+                self.consume('SEPARATOR', '(')
+                arguments = []
+                while self.current_token().type != 'SEPARATOR' or self.current_token().value != ')':
+                    arguments.append(self.parse_expression())  
+                    if self.current_token().value == ',':
+                        self.consume('SEPARATOR', ',')  
+                self.consume('SEPARATOR', ')')  
+                return UseFuncNode(func_name, arguments)  
+            else:
+                return VariableUsageNode(func_name)
         elif current_token.type == 'BOOL':  
             return ValueNode(self.consume('BOOL'))
         elif current_token.type == 'SEPARATOR' and current_token.value == '(':
@@ -355,15 +375,25 @@ if __name__ == "__main__":
         elif isinstance(node, ReturnNode):
             print(f"{indent}Return:")
             print_ast(node.keyword, level + 1)
-        elif isinstance(node, VariableDeclarationNode):  # Добавляем обработку переменной
+        elif isinstance(node, VariableDeclarationNode):
             print(f"{indent}Variable Declaration: {node.var_type.value} {node.var_name.value}")
             if node.value:
                 print(f"{indent}  Assigned value:")
                 print_ast(node.value, level + 1)
-        elif isinstance(node, FuncNode):  # Добавляем обработку функции
+        elif isinstance(node, VariableUsageNode):
+            print(f"{indent}Variable Usage: {node.var_name.value}")
+        elif isinstance(node, FuncNode):
             print(f"{indent}Function Call: {node.func_token.value}")
             for arg in node.arguments:
                 print(f"{indent}  Argument:")
+                print_ast(arg, level + 1)
+        elif isinstance(node, UseFuncNode):
+            if node.name_variable != None:
+                print(f"{indent}Variable Declaration: {node.return_type.value} {node.name_variable.value}")
+                print(f"{indent}Operation: =")
+            print(f"{indent}Function Call: {node.func_token.value}")
+            print(f"{indent}Arguments:")
+            for arg in node.arguments:
                 print_ast(arg, level + 1)
         else:
             print(f"{indent}Unknown node type: {type(node)}")
