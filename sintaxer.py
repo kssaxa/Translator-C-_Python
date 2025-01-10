@@ -1,5 +1,7 @@
 from lexer import *
 from nodes import *
+from gen import *
+
 
 class Parser:
     def __init__(self, tokens):
@@ -323,9 +325,14 @@ if __name__ == "__main__":
     """
 
     tokens = tokenize(code)
-    print(tokens)
+    #print(tokens)
     parser = Parser(tokens)
     ast = parser.parse()
+    gener = CodeGenerator()
+    with open("test.py", "w") as file:
+        file.write(gener.genPython(ast))
+
+    #print(gener.genPython(ast))
 
     def print_ast(node, level=0):
         indent = "  " * level
@@ -398,5 +405,4 @@ if __name__ == "__main__":
         else:
             print(f"{indent}Unknown node type: {type(node)}")
 
-
-    print_ast(ast)
+    #print_ast(ast)

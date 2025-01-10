@@ -88,12 +88,13 @@ class ElseIfNode(ExpressionNode):
 class FunctionNode(ExpressionNode):
     """Узел для объявления функции."""
     
-    def __init__(self, return_type: Token, name_token: str, parameters: list, body: ExpressionNode):
+    def __init__(self, return_type: Token, name_token: Token, parameters: list, body: ExpressionNode):
         super().__init__()
         self.return_type = return_type 
         self.name_token = name_token
         self.parameters = parameters 
         self.body = body  
+
 
 class ReturnNode(ExpressionNode):
     """Узел для ключевого слова return."""
@@ -127,7 +128,7 @@ class VariableUsageNode(ExpressionNode):
 class FuncNode:
     """Узел для функций ввода/вывода."""
 
-    def __init__(self, func_token, arguments):
+    def __init__(self, func_token: Token, arguments: list):
         self.func_token = func_token  # Токен функции (например, cin)
         self.arguments = arguments  # Список аргументов функции
         self.operator = None
