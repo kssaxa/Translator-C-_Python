@@ -1,4 +1,5 @@
 from lexer import Token
+from typing import List
 
 
 class ExpressionNode:
@@ -12,7 +13,7 @@ class StatementNode(ExpressionNode):
 
     def __init__(self):
         super().__init__()
-        self.statements = []
+        self.statements:List = []
 
     def add_node(self, node: ExpressionNode):
         self.statements.append(node)
@@ -85,14 +86,15 @@ class ElseIfNode(ExpressionNode):
 
 
 class FunctionNode(ExpressionNode):
-    """Узел для функции."""
+    """Узел для объявления функции."""
     
-    def __init__(self, return_type: Token, name_token: str, parameters: list, body: ExpressionNode):
+    def __init__(self, return_type: Token, name_token: Token, parameters: list, body: ExpressionNode):
         super().__init__()
         self.return_type = return_type 
         self.name_token = name_token
-        self.parameters = parameters  
+        self.parameters = parameters 
         self.body = body  
+
 
 class ReturnNode(ExpressionNode):
     """Узел для ключевого слова return."""
@@ -112,13 +114,35 @@ class VariableDeclarationNode(ExpressionNode):
         self.value = value  
 
 
+class VariableUsageNode(ExpressionNode):
+    """Узел для использования переменной."""
+    
+    def __init__(self, var_name: Token):
+        super().__init__()
+        self.var_name = var_name  
+
+    def __repr__(self):
+        return f"VariableUsageNode(var_name={self.var_name.value})"
+
+
 class FuncNode:
     """Узел для функций ввода/вывода."""
 
-    def __init__(self, func_token, arguments):
+    def __init__(self, func_token: Token, arguments: list):
         self.func_token = func_token  # Токен функции (например, cin)
         self.arguments = arguments  # Список аргументов функции
         self.operator = None
 
     def add_argument(self, argument):
         self.arguments.append(argument)
+
+
+class UseFuncNode(ExpressionNode):
+    """Узел для вызова функции."""
+    
+    def __init__(self, func_token: Token, arguments: list):
+        super().__init__()
+        self.name_variable = None
+        self.return_type = None
+        self.func_token = func_token  
+        self.arguments = arguments  
