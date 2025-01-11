@@ -11,21 +11,22 @@ class Token(NamedTuple):
 
 # Спецификация токенов для C++
 TOKEN_SPECIFICATION = [
+    ("PREPROCESSOR", r"#\s*\w+"),  # Директивы препроцессора
     ("NUMBER", r"\d+(\.\d*)?"),  # Числа
     ("KEYWORD", r"int|float|return|void|bool"),  # Ключевые слова C++
     ("BLOCK", r"if|else|while|for"),  # Блоки управления
-    ("BOOL", r"true|false"),
+    ("BOOL", r"true|false"),  # Логические значения
     ("FUNC", r"std::cin|std::cout|std::printf|std::scanf|std::getline"),  # Функции ввода/вывода
     ("IDENTIFIER", r"[a-zA-Z_][a-zA-Z0-9_]*"),  # Идентификаторы (имена переменных, функций)
-    ("OPERATOR", r"\+\+|\-\-|==|!=|<=|>=|<<|>>|=|\+|\-|\*|/|<|>|%"),  # Операторы
+    ("OPERATOR", r"\+\+|\-\-|==|!=|<=|>=|<<|>>|=|\+|\-|\*|/|<|>|%|\?|:"),  # Операторы
     ("STRING", r"\".*?\"|\'.*?\'"),  # Строки
     ("SEPARATOR", r"[(){},;]"),  # Разделители
     ("COMMENT", r"//.*?$|/\*.*?\*/"),  # Комментарии (однострочные и многострочные)
     ("NEWLINE", r"\n"),  # Перенос строки
     ("SKIP", r"[ \t\r]+"),  # Пропуск пробелов
     ("MISMATCH", r"."),  # Неопределённые токены
-    
 ]
+
 
 
 def tokenize(code: str):
