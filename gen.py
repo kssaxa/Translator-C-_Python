@@ -117,8 +117,11 @@ class CodeGenerator:
             return out + end
         
         elif type(node) == ReturnNode:
-            out = MARGIN * level + 'return ' + f'{node.keyword.value.value}'
-            return out + end
+            if (level == 0):
+                return ''
+            else:
+                out = MARGIN * level + 'return ' + f'{node.keyword.value.value}'
+                return out + end
 
         else:
             return '\n'
