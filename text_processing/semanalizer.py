@@ -1,6 +1,6 @@
-from lexer import Token
-from nodes import *
-from sintaxer import *
+from .lexer import Token
+from .nodes import *
+from .sintaxer import *
 
 class SemanticAnalyzer:
     def __init__(self) -> None:
@@ -44,7 +44,7 @@ class SemanticAnalyzer:
             if token.value == name:
                 func = details
                 break
-        
+
         if func is None:
             raise NameError(f'Функция {name!r} не определена')
         if len(arguments) != len(func["parameters"]):
@@ -59,7 +59,7 @@ class SemanticAnalyzer:
             pass
 
         elif isinstance(node, VariableUsageNode):
-            self.check_variable(node.var_name.value)    
+            self.check_variable(node.var_name.value)
 
         elif isinstance(node, FunctionNode):  # Функция (объявление)
             self.declare_function(
@@ -76,7 +76,7 @@ class SemanticAnalyzer:
                 self.checkNode(node.body)  # Если body не StatementNode, просто проверяем его
             self.leave_scope()
 
-        elif isinstance(node, UseFuncNode):  # Вызовы функции 
+        elif isinstance(node, UseFuncNode):  # Вызовы функции
             self.check_function(
                 node.func_token.value,
                 [arg for arg in node.arguments]
@@ -104,147 +104,16 @@ class SemanticAnalyzer:
                 self.checkNode(node)
 
 # Пример
-if __name__ == "__main__":
-    '''code = """
-    int main() {
-        int x;
-        x = 5;
-        return x;
-    }
-    """'''
+def Semanalize(ast):
 
-    '''code = """
-    int main() {
-        int number;
-        std::cin >> number;
-        if (number % 2 == 0) {
-            std::printf("The number is: ", number);
-        } else {
-            std::printf("The number is: ", 3);
-        }
-        return 0;
-    }
-    """'''
-
-    # Ошибка: переменная y не была объявлена
-    '''code = """
-    int main() {
-        int x;
-        y = 10;
-        return 0;
-    }
-    """'''
-
-    '''code = """
-    int sum(int a, int b) {
-        return a + b;
-    }
-
-    int main() {
-        int result = sum(5, 3);
-        return 0;
-    }
-    """'''
-
-    code = """
-    int sum(int a, int b) {
-        return a + b;
-    }
-
-    int main() {
-        int result;
-        result = sum(5, 3);
-        return 0;
-    }
-    """
-
-
-
-
-    tokens = tokenize(code)
-    print(tokens)
-    parser = Parser(tokens)
-    ast = parser.parse()
-
-
-    def print_ast(node, level=0):
-        indent = "  " * level
-        if isinstance(node, ValueNode):
-            print(f"{indent}Value: {node.value.value}")
-        elif isinstance(node, BinOperatorNode):
-            print(f"{indent}Binary Operator: {node.operator.value}")
-            print_ast(node.left, level + 1)
-            print_ast(node.right, level + 1)
-        elif isinstance(node, UnarOperatorNode):
-            print(f"{indent}Unary Operator: {node.operator.value}")
-            print_ast(node.operand, level + 1)
-        elif isinstance(node, BlockNode):
-            print(f"{indent}Block: {node.keyword.value}")
-            print(f"{indent}Condition:")
-            print_ast(node.condition, level + 1)
-            print(f"{indent}Body:")
-            for stmt in node.body:
-                print_ast(stmt, level + 1)
-            if node.else_branch:
-                print(f"{indent}Else:")
-                print_ast(node.else_branch, level + 1)
-        elif isinstance(node, ElseNode):
-            print(f"{indent}Else Block:")
-            for stmt in node.body:
-                print_ast(stmt, level + 1)
-        elif isinstance(node, ElseIfNode):
-            print(f"{indent}Else If:")
-            print_ast(node.condition, level + 1)
-            print(f"{indent}Body:")
-            for stmt in node.body:
-                print_ast(stmt, level + 1)
-            if node.else_branch:
-                print(f"{indent}Else:")
-                print_ast(node.else_branch, level + 1)
-        elif isinstance(node, StatementNode):
-            print(f"{indent}Statements:")
-            for stmt in node.statements:
-                print_ast(stmt, level + 1)
-        elif isinstance(node, FunctionNode):
-            print(f"{indent}Function: {node.return_type.value} {node.name_token.value}")
-            print(f"{indent}Parameters:")
-            for param in node.parameters:
-                print(f"{indent}  {param[0].value} {param[1].value}")
-            print(f"{indent}Body:")
-            print_ast(node.body, level + 1)
-        elif isinstance(node, ReturnNode):
-            print(f"{indent}Return:")
-            print_ast(node.keyword, level + 1)
-        elif isinstance(node, VariableDeclarationNode):
-            print(f"{indent}Variable Declaration: {node.var_type.value} {node.var_name.value}")
-            if node.value:
-                print(f"{indent}  Assigned value:")
-                print_ast(node.value, level + 1)
-        elif isinstance(node, VariableUsageNode):
-            print(f"{indent}Variable Usage: {node.var_name.value}")
-        elif isinstance(node, FuncNode):
-            print(f"{indent}Function Call: {node.func_token.value}")
-            for arg in node.arguments:
-                print(f"{indent}  Argument:")
-                print_ast(arg, level + 1)
-        elif isinstance(node, UseFuncNode):
-            if node.name_variable != None:
-                print(f"{indent}Variable Declaration: {node.return_type.value} {node.name_variable.value}")
-                print(f"{indent}Operation: =")
-            print(f"{indent}Function Call: {node.func_token.value}")
-            print(f"{indent}Arguments:")
-            for arg in node.arguments:
-                print_ast(arg, level + 1)
-        else:
-            print(f"{indent}Unknown node type: {type(node)}")
-
-
-
-    print_ast(ast)
 
     analyzer = SemanticAnalyzer()
+
     try:
         analyzer.check(ast)
         print("Семантический анализ прошел успешно!")
+        # return analyzer
+        return 1
     except Exception as e:
         print(f"Семантическая ошибка: {e}")
+        return 0

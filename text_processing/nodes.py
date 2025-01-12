@@ -1,4 +1,4 @@
-from lexer import Token
+from .lexer import Token
 from typing import List
 
 
@@ -87,18 +87,18 @@ class ElseIfNode(ExpressionNode):
 
 class FunctionNode(ExpressionNode):
     """Узел для объявления функции."""
-    
+
     def __init__(self, return_type: Token, name_token: Token, parameters: list, body: ExpressionNode):
         super().__init__()
-        self.return_type = return_type 
+        self.return_type = return_type
         self.name_token = name_token
-        self.parameters = parameters 
-        self.body = body  
+        self.parameters = parameters
+        self.body = body
 
 
 class ReturnNode(ExpressionNode):
     """Узел для ключевого слова return."""
-    
+
     def __init__(self, keyword: Token):
         super().__init__()
         self.keyword = keyword
@@ -106,20 +106,20 @@ class ReturnNode(ExpressionNode):
 
 class VariableDeclarationNode(ExpressionNode):
     """Узел для объявления переменной."""
-    
+
     def __init__(self, var_type: Token, var_name: Token, value: ExpressionNode = None):
         super().__init__()
-        self.var_type = var_type  
-        self.var_name = var_name  
-        self.value = value  
+        self.var_type = var_type
+        self.var_name = var_name
+        self.value = value
 
 
 class VariableUsageNode(ExpressionNode):
     """Узел для использования переменной."""
-    
+
     def __init__(self, var_name: Token):
         super().__init__()
-        self.var_name = var_name  
+        self.var_name = var_name
 
     def __repr__(self):
         return f"VariableUsageNode(var_name={self.var_name.value})"
@@ -139,10 +139,10 @@ class FuncNode:
 
 class UseFuncNode(ExpressionNode):
     """Узел для вызова функции."""
-    
+
     def __init__(self, func_token: Token, arguments: list):
         super().__init__()
         self.name_variable = None
         self.return_type = None
-        self.func_token = func_token  
-        self.arguments = arguments  
+        self.func_token = func_token
+        self.arguments = arguments

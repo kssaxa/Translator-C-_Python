@@ -1,6 +1,6 @@
-from lexer import *
-from nodes import *
-from gen import *
+from .lexer import *
+from .nodes import *
+from .gen import *
 
 
 class Parser:
@@ -16,7 +16,7 @@ class Parser:
         statement_node = StatementNode()
         while self.current_token_index < len(self.tokens):
             if self.current_token().type == 'NEWLINE':
-                self.consume('NEWLINE') 
+                self.consume('NEWLINE')
             else:
                 statement_node.add_node(self.parse_statement())
         return statement_node
@@ -39,19 +39,19 @@ class Parser:
             p_node = self.parse_expression()
             self.consume('SEPARATOR', ';')
             return p_node
-        elif current_token.type == 'FUNC': 
+        elif current_token.type == 'FUNC':
             return self.parse_func_statement()
         else:
             self.error(f"Unexpected token {current_token.type}")
 
 
-    # Создает узел StatementNode и добавляет в него операторы последовательно 
+    # Создает узел StatementNode и добавляет в него операторы последовательно
     # (Для функции, иначе в тело функции будет занесено всё до конца программы)
     def parse_statements_for_function(self):
         statement_node = StatementNode()
         while self.current_token().type != 'SEPARATOR' and self.current_token().value != '}':
             if self.current_token().type == 'NEWLINE':
-                self.consume('NEWLINE') 
+                self.consume('NEWLINE')
             else:
                 statement_node.add_node(self.parse_statement())
         return statement_node
@@ -86,9 +86,9 @@ class Parser:
     # Парсер функции
     def parse_function(self, return_type_token, name_token):
         self.consume('SEPARATOR', '(')
-        parameters = self.parse_parameters()  
+        parameters = self.parse_parameters()
         self.consume('SEPARATOR', ')')
-        
+
         self.consume('SEPARATOR', '{')
         body = self.parse_statements_for_function()  # Тело функции (последовательность операторов)
         self.consume('SEPARATOR', '}')
@@ -108,7 +108,7 @@ class Parser:
             else:
                 self.error(f"Unexpected token {self.current_token().type} in parameters")
         return params
-    
+
     #RETURN
     def parse_return_statement(self):
             self.consume('KEYWORD', 'return')
@@ -139,9 +139,9 @@ class Parser:
         if self.current_token().type == 'BLOCK' and self.current_token().value == 'else':
             self.consume('BLOCK', 'else')
             if self.current_token().type == 'BLOCK' and self.current_token().value == 'if':
-                return self.parse_else_if(block_node)  
+                return self.parse_else_if(block_node)
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '{':
-                block_node.else_branch = self.parse_else()  
+                block_node.else_branch = self.parse_else()
 
         return block_node
 
@@ -150,7 +150,7 @@ class Parser:
         keyword = self.consume('SEPARATOR', '(')
         condition = self.parse_expression()
         self.consume('SEPARATOR', ')')
-        
+
         else_if_node = ElseIfNode(keyword, condition)
         self.consume('SEPARATOR', '{')
         while self.current_token().type != 'SEPARATOR' or self.current_token().value != '}':
@@ -163,9 +163,9 @@ class Parser:
         if self.current_token().type == 'BLOCK' and self.current_token().value == 'else':
             self.consume('BLOCK', 'else')
             if self.current_token().type == 'BLOCK' and self.current_token().value == 'if':
-                else_if_node.else_branch = self.parse_else_if(parent_block) 
+                else_if_node.else_branch = self.parse_else_if(parent_block)
             else:
-                else_if_node.else_branch = self.parse_else()  
+                else_if_node.else_branch = self.parse_else()
 
         return else_if_node
 
@@ -176,7 +176,7 @@ class Parser:
         self.consume('SEPARATOR', '{')
         while self.current_token().type != 'SEPARATOR' or self.current_token().value != '}':
             if self.current_token().type == 'NEWLINE':
-                self.consume('NEWLINE') 
+                self.consume('NEWLINE')
             else:
                 else_node.add_node(self.parse_statement())
         self.consume('SEPARATOR', '}')
@@ -184,29 +184,29 @@ class Parser:
 
     # Разветвление cin, cout и тд
     def parse_func_statement(self):
-        func_token = self.consume('FUNC') 
-        
+        func_token = self.consume('FUNC')
+
         if func_token.value in ('std::cin', 'std::cout', 'std::printf', 'std::scanf', 'std::getline'):
             if func_token.value in ('std::cin', 'std::cout'):
                 return self.parse_cin_cout(func_token)
             elif func_token.value in ('std::printf', 'std::scanf', 'std::getline'):
                 return self.parse_standard_func(func_token)
 
-        
+
     def parse_cin_cout(self, func_token):
-        # Ожидаем оператор << или >> 
+        # Ожидаем оператор << или >>
         output_node = FuncNode(func_token, [])
-        
+
         while True:
             if self.current_token().type == 'OPERATOR' and self.current_token().value in ('<<', '>>'):
-                self.consume('OPERATOR')  
+                self.consume('OPERATOR')
                 if self.current_token().type in ('IDENTIFIER', 'NUMBER', 'STRING'):
-                    argument = self.parse_expression()  
-                    output_node.add_argument(argument) 
+                    argument = self.parse_expression()
+                    output_node.add_argument(argument)
                 else:
                     self.error("Expected argument after operator")
             else:
-                break 
+                break
 
         self.consume('SEPARATOR', ';')
         return output_node
@@ -220,15 +220,15 @@ class Parser:
             if self.current_token().type == 'NEWLINE':
                     self.consume('NEWLINE')
             elif self.current_token().type in ('IDENTIFIER', 'NUMBER', 'STRING'):
-                argument_node = self.parse_expression()  
+                argument_node = self.parse_expression()
                 arguments.append(argument_node)
                 if self.current_token().type == 'SEPARATOR' and self.current_token().value == ',':
-                    self.consume('SEPARATOR', ',')  
+                    self.consume('SEPARATOR', ',')
             else:
                 self.error(f"Unexpected token {self.current_token().type} in function arguments")
 
         self.consume('SEPARATOR', ')')
-        self.consume('SEPARATOR', ';') 
+        self.consume('SEPARATOR', ';')
         return FuncNode(func_token, arguments)
 
     # Для выражений
@@ -239,7 +239,7 @@ class Parser:
             right = self.parse_expression(self.get_precedence(operator.value) + 1)  # увеличиваем приоритет для правой части
             left = BinOperatorNode(operator, left, right)
         return left
-    
+
 
     # Числа, идентификаторы, строки и тд
     def parse_primary(self):
@@ -253,21 +253,21 @@ class Parser:
                 self.consume('SEPARATOR', '(')
                 arguments = []
                 while self.current_token().type != 'SEPARATOR' or self.current_token().value != ')':
-                    arguments.append(self.parse_expression())  
+                    arguments.append(self.parse_expression())
                     if self.current_token().value == ',':
-                        self.consume('SEPARATOR', ',')  
-                self.consume('SEPARATOR', ')')  
-                return UseFuncNode(func_name, arguments)  
+                        self.consume('SEPARATOR', ',')
+                self.consume('SEPARATOR', ')')
+                return UseFuncNode(func_name, arguments)
             else:
                 return VariableUsageNode(func_name)
-        elif current_token.type == 'BOOL':  
+        elif current_token.type == 'BOOL':
             return ValueNode(self.consume('BOOL'))
         elif current_token.type == 'SEPARATOR' and current_token.value == '(':
             self.consume('SEPARATOR', '(')
-            expr = self.parse_expression()  
+            expr = self.parse_expression()
             self.consume('SEPARATOR', ')')
             return expr
-        elif current_token.type == 'STRING': 
+        elif current_token.type == 'STRING':
             return ValueNode(self.consume('STRING'))
         else:
             self.error(f"Unexpected token {current_token.type}")
@@ -275,7 +275,7 @@ class Parser:
     # Приоритет операций (больше значение, выше приоритет)
     def get_precedence(self, operator: str) -> int:
         precedence = {
-            '=': 1,      # Присваивание 
+            '=': 1,      # Присваивание
             '==': 2,     # Сравнение
             '!=': 2,
             '<': 2,
@@ -305,104 +305,154 @@ class Parser:
 
     def error(self, message):
         raise SyntaxError(message)
-    
 
 
 
-# Пример 
-if __name__ == "__main__":
-    code = """
-    int main() {
-        int number;
-        std::cin >> number;
-        if (number % 2 == 0) {
-            std::printf("The number is: ", number);
-        } else {
-            std::printf("The number is: ", 3);
-        }
-        return 0;
-    }
-    """
+def Sintaxize(tokens):
 
-    tokens = tokenize(code)
-    #print(tokens)
     parser = Parser(tokens)
     ast = parser.parse()
     gener = CodeGenerator()
-    with open("test.py", "w") as file:
+    with open("testt.py", "w") as file:
         file.write(gener.genPython(ast))
 
     #print(gener.genPython(ast))
+    # def print_ast(node, level=0):
+    #     indent = "  " * level
+    #     if isinstance(node, ValueNode):
+    #         print(f"{indent}Value: {node.value.value}")
+    #     elif isinstance(node, BinOperatorNode):
+    #         print(f"{indent}Binary Operator: {node.operator.value}")
+    #         print_ast(node.left, level + 1)
+    #         print_ast(node.right, level + 1)
+    #     elif isinstance(node, UnarOperatorNode):
+    #         print(f"{indent}Unary Operator: {node.operator.value}")
+    #         print_ast(node.operand, level + 1)
+    #     elif isinstance(node, BlockNode):
+    #         print(f"{indent}Block: {node.keyword.value}")
+    #         print(f"{indent}Condition:")
+    #         print_ast(node.condition, level + 1)
+    #         print(f"{indent}Body:")
+    #         for stmt in node.body:
+    #             print_ast(stmt, level + 1)
+    #         if node.else_branch:
+    #             print(f"{indent}Else:")
+    #             print_ast(node.else_branch, level + 1)
+    #     elif isinstance(node, ElseNode):
+    #         print(f"{indent}Else Block:")
+    #         for stmt in node.body:
+    #             print_ast(stmt, level + 1)
+    #     elif isinstance(node, ElseIfNode):
+    #         print(f"{indent}Else If:")
+    #         print_ast(node.condition, level + 1)
+    #         print(f"{indent}Body:")
+    #         for stmt in node.body:
+    #             print_ast(stmt, level + 1)
+    #         if node.else_branch:
+    #             print(f"{indent}Else:")
+    #             print_ast(node.else_branch, level + 1)
+    #     elif isinstance(node, StatementNode):
+    #         print(f"{indent}Statements:")
+    #         for stmt in node.statements:
+    #             print_ast(stmt, level + 1)
+    #     elif isinstance(node, FunctionNode):
+    #         print(f"{indent}Function: {node.return_type.value} {node.name_token.value}")
+    #         print(f"{indent}Parameters:")
+    #         for param in node.parameters:
+    #             print(f"{indent}  {param[0].value} {param[1].value}")
+    #         print(f"{indent}Body:")
+    #         print_ast(node.body, level + 1)
+    #     elif isinstance(node, ReturnNode):
+    #         print(f"{indent}Return:")
+    #         print_ast(node.keyword, level + 1)
+    #     elif isinstance(node, VariableDeclarationNode):
+    #         print(f"{indent}Variable Declaration: {node.var_type.value} {node.var_name.value}")
+    #         if node.value:
+    #             print(f"{indent}  Assigned value:")
+    #             print_ast(node.value, level + 1)
+    #     elif isinstance(node, VariableUsageNode):
+    #         print(f"{indent}Variable Usage: {node.var_name.value}")
+    #     elif isinstance(node, FuncNode):
+    #         print(f"{indent}Function Call: {node.func_token.value}")
+    #         for arg in node.arguments:
+    #             print(f"{indent}  Argument:")
+    #             print_ast(arg, level + 1)
+    #     elif isinstance(node, UseFuncNode):
+    #         if node.name_variable != None:
+    #             print(f"{indent}Variable Declaration: {node.return_type.value} {node.name_variable.value}")
+    #             print(f"{indent}Operation: =")
+    #         print(f"{indent}Function Call: {node.func_token.value}")
+    #         print(f"{indent}Arguments:")
+    #         for arg in node.arguments:
+    #             print_ast(arg, level + 1)
+    #     else:
+    #         print(f"{indent}Unknown node type: {type(node)}")
+    #print_ast(ast)
 
     def print_ast(node, level=0):
         indent = "  " * level
-        if isinstance(node, ValueNode):
-            print(f"{indent}Value: {node.value.value}")
-        elif isinstance(node, BinOperatorNode):
-            print(f"{indent}Binary Operator: {node.operator.value}")
-            print_ast(node.left, level + 1)
-            print_ast(node.right, level + 1)
-        elif isinstance(node, UnarOperatorNode):
-            print(f"{indent}Unary Operator: {node.operator.value}")
-            print_ast(node.operand, level + 1)
-        elif isinstance(node, BlockNode):
-            print(f"{indent}Block: {node.keyword.value}")
-            print(f"{indent}Condition:")
-            print_ast(node.condition, level + 1)
-            print(f"{indent}Body:")
-            for stmt in node.body:
-                print_ast(stmt, level + 1)
-            if node.else_branch:
-                print(f"{indent}Else:")
-                print_ast(node.else_branch, level + 1)
-        elif isinstance(node, ElseNode):
-            print(f"{indent}Else Block:")
-            for stmt in node.body:
-                print_ast(stmt, level + 1)
-        elif isinstance(node, ElseIfNode):
-            print(f"{indent}Else If:")
-            print_ast(node.condition, level + 1)
-            print(f"{indent}Body:")
-            for stmt in node.body:
-                print_ast(stmt, level + 1)
-            if node.else_branch:
-                print(f"{indent}Else:")
-                print_ast(node.else_branch, level + 1)
-        elif isinstance(node, StatementNode):
-            print(f"{indent}Statements:")
-            for stmt in node.statements:
-                print_ast(stmt, level + 1)
-        elif isinstance(node, FunctionNode):
-            print(f"{indent}Function: {node.return_type.value} {node.name_token.value}")
-            print(f"{indent}Parameters:")
-            for param in node.parameters:
-                print(f"{indent}  {param[0].value} {param[1].value}")
-            print(f"{indent}Body:")
-            print_ast(node.body, level + 1)
-        elif isinstance(node, ReturnNode):
-            print(f"{indent}Return:")
-            print_ast(node.keyword, level + 1)
-        elif isinstance(node, VariableDeclarationNode):
-            print(f"{indent}Variable Declaration: {node.var_type.value} {node.var_name.value}")
-            if node.value:
-                print(f"{indent}  Assigned value:")
-                print_ast(node.value, level + 1)
-        elif isinstance(node, VariableUsageNode):
-            print(f"{indent}Variable Usage: {node.var_name.value}")
-        elif isinstance(node, FuncNode):
-            print(f"{indent}Function Call: {node.func_token.value}")
-            for arg in node.arguments:
-                print(f"{indent}  Argument:")
-                print_ast(arg, level + 1)
-        elif isinstance(node, UseFuncNode):
-            if node.name_variable != None:
-                print(f"{indent}Variable Declaration: {node.return_type.value} {node.name_variable.value}")
-                print(f"{indent}Operation: =")
-            print(f"{indent}Function Call: {node.func_token.value}")
-            print(f"{indent}Arguments:")
-            for arg in node.arguments:
-                print_ast(arg, level + 1)
-        else:
-            print(f"{indent}Unknown node type: {type(node)}")
+        result = []
 
-    #print_ast(ast)
+        if isinstance(node, ValueNode):
+            result.append(f"{indent}Value: {node.value.value}")
+        elif isinstance(node, BinOperatorNode):
+            result.append(f"{indent}Binary Operator: {node.operator.value}")
+            result.extend(print_ast(node.left, level + 1))
+            result.extend(print_ast(node.right, level + 1))
+        elif isinstance(node, UnarOperatorNode):
+            result.append(f"{indent}Unary Operator: {node.operator.value}")
+            result.extend(print_ast(node.operand, level + 1))
+        elif isinstance(node, BlockNode):
+            result.append(f"{indent}Block: {node.keyword.value}")
+            result.append(f"{indent}Condition:")
+            result.extend(print_ast(node.condition, level + 1))
+            result.append(f"{indent}Body:")
+            for stmt in node.body:
+                result.extend(print_ast(stmt, level + 1))
+            if node.else_branch:
+                result.append(f"{indent}Else:")
+                result.extend(print_ast(node.else_branch, level + 1))
+        elif isinstance(node, ElseNode):
+            result.append(f"{indent}Else Block:")
+            for stmt in node.body:
+                result.extend(print_ast(stmt, level + 1))
+        elif isinstance(node, ElseIfNode):
+            result.append(f"{indent}Else If:")
+            result.extend(print_ast(node.condition, level + 1))
+            result.append(f"{indent}Body:")
+            for stmt in node.body:
+                result.extend(print_ast(stmt, level + 1))
+            if node.else_branch:
+                result.append(f"{indent}Else:")
+                result.extend(print_ast(node.else_branch, level + 1))
+        elif isinstance(node, StatementNode):
+            result.append(f"{indent}Statements:")
+            for stmt in node.statements:
+                result.extend(print_ast(stmt, level + 1))
+        elif isinstance(node, FunctionNode):
+            result.append(f"{indent}Function: {node.return_type.value} {node.name_token.value}")
+            result.append(f"{indent}Parameters:")
+            for param in node.parameters:
+                result.append(f"{indent}  {param[0].value} {param[1].value}")
+            result.append(f"{indent}Body:")
+            result.extend(print_ast(node.body, level + 1))
+        elif isinstance(node, ReturnNode):
+            result.append(f"{indent}Return:")
+            result.extend(print_ast(node.keyword, level + 1))
+        elif isinstance(node, VariableDeclarationNode):
+            result.append(f"{indent}Variable Declaration: {node.var_type.value} {node.var_name.value}")
+            if node.value:
+                result.append(f"{indent}  Assigned value:")
+                result.extend(print_ast(node.value, level + 1))
+        elif isinstance(node, FuncNode):
+            result.append(f"{indent}Function Call: {node.func_token.value}")
+            for arg in node.arguments:
+                result.append(f"{indent}  Argument:")
+                result.extend(print_ast(arg, level + 1))
+        else:
+            result.append(f"{indent}Unknown node type: {type(node)}")
+
+        return result
+
+    return "\n".join(print_ast(ast)), ast, gener.output
+

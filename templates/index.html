@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+    <title>Translator</title>
+
+  </head>
+  <body>
+    <div id="content">
+      <h1>Translator С++ &#8594; Python</h1>
+
+      <div id="Items_Wrapper">
+        <div class="item">
+          <div class="head_item">
+            <p>Исходный текст</p>
+            <button type="file" id="open_file_btn">Загрузить файл</button>
+          </div>
+          <textarea id="input_txt" placeholder="C++ code"></textarea>
+        </div>
+
+        <div class="item">
+          <div class="head_item">
+            <p>результат трансляции</p>
+            <button id="download_file_btn">Скачать файл</button>
+          </div>
+          <textarea id="output_txt" placeholder="Python code" disabled></textarea>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="head_item">
+          <button id="translate_btn">Транслировать</button>
+          <p>протокол трансляции</p>
+        </div>
+        <textarea id="log_txt" placeholder="traslate protocol" disabled></textarea>
+      </div>
+    </div>
+  </body>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</html>
