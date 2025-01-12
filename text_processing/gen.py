@@ -1,5 +1,5 @@
-from .lexer import Token
-from .nodes import *
+from lexer import Token
+from nodes import *
 
 toPython = {
     'true': 'True',
@@ -30,7 +30,7 @@ class CodeGenerator:
             if node.else_branch is not None:
                 out += self.genPythonNode(node.else_branch, level)
             return out + end
-
+        
         if type(node) == StatementNode:
             out = ''
             for subnode in node.statements:
@@ -42,7 +42,7 @@ class CodeGenerator:
             for subnode in node.body:
                 out += self.genPythonNode(subnode, level + 1, '\n')
             return out + end
-
+        
 
         elif type(node) == ElseIfNode:
             out = MARGIN * level + 'elif ('
@@ -50,14 +50,15 @@ class CodeGenerator:
             for subnode in node.body:
                 out += self.genPythonNode(subnode, level + 1, '\n')
             return out + end
-
+        
         elif type(node) == FunctionNode:
             if (node.name_token.value != 'main'):
-                out = MARGIN * level + f'{node.name_token} ('
+                out = MARGIN * level + 'def ' + f'{node.name_token.value} ('
                 for args in node.parameters:
-                    out += self.genPythonNode(args, 0, ',')
-                out += ')'
-                out += self.genPythonNode(node.body, level + 1, '\n')
+                    out += args[1].value + ', '
+                out = out.rstrip(", ")
+                out += '):\n'
+                out += self.genPythonNode(node.body, level + 1, '')
                 return out + end
             else:
                 out = ''
@@ -83,17 +84,17 @@ class CodeGenerator:
             out += self.genPythonNode(node.value, level)
             out += '\n'
             return out + end
-
+        
         elif type(node) == VariableUsageNode:
             out = MARGIN * level + \
                 f'{node.var_name.value}'
             return out + end
-
+        
         elif type(node) == ValueNode:
             out = MARGIN * level + \
                 f'{toPython[node.value.value] if node.value.value in toPython.keys() else node.value.value}'
             return out + end
-
+        
         elif type(node) == FuncNode:
             if node.func_token.value == 'std::printf':
                 out = MARGIN * level + 'print' + '('
@@ -108,27 +109,29 @@ class CodeGenerator:
                 out = out.rstrip(", ")
                 out += ' = input' + '()'
             return out + end
-
+        
         elif type(node) == UseFuncNode:
             out = MARGIN * level + f'{node.func_token.value} ('
             for args in node.arguments:
                 out += self.genPythonNode(args, 0, ',')
             out += ')'
             return out + end
-
+        
         elif type(node) == ReturnNode:
             if (level == 0):
                 return ''
-            else:
-                out = MARGIN * level + 'return ' + f'{node.keyword.value}'
+            elif type(node.keyword) == Token:
+                out = 'return ' + f'{node.keyword.value}'
                 return out + end
+            else:
+                out = 'return ' + f'{self.genPythonNode(node.keyword, 0)}'
+                return out + end
+
 
         else:
             return '\n'
 
     def genPython(self, root: StatementNode) -> str:
-
-
         for node in root.statements:
-            self.output += self.genPythonNode(node, 0, '\n')
+            self.output += self.genPythonNode(node, 0)
         return self.output
