@@ -2,6 +2,7 @@ from .lexer import Token
 from .nodes import *
 from .sintaxer import *
 
+
 class SemanticAnalyzer:
     def __init__(self) -> None:
         self.variables = {}  # Хранение переменных с их типами
@@ -20,8 +21,11 @@ class SemanticAnalyzer:
         """Объявление переменной в текущей области видимости."""
         if name in self.variables:
             raise NameError(f'Переменная {name!r} уже объявлена')
+        last_scope = self.current_scope[-1] if self.current_scope else None
+        if last_scope is not None:
+            last_scope.add(name)
+
         self.variables[name] = var_type
-        self.current_scope[-1].add(name)
 
     def check_variable(self, name: str):
         """Проверить использование переменной."""
@@ -32,6 +36,8 @@ class SemanticAnalyzer:
         """Объявление функции."""
         if name in self.functions:
             raise NameError(f'Функция {name!r} уже объявлена')
+        for param in parameters:
+            self.declare_variable(param[1], param[0]) 
         self.functions[name] = {
             "return_type": return_type,
             "parameters": parameters,
@@ -44,7 +50,7 @@ class SemanticAnalyzer:
             if token.value == name:
                 func = details
                 break
-
+        
         if func is None:
             raise NameError(f'Функция {name!r} не определена')
         if len(arguments) != len(func["parameters"]):
@@ -59,13 +65,13 @@ class SemanticAnalyzer:
             pass
 
         elif isinstance(node, VariableUsageNode):
-            self.check_variable(node.var_name.value)
+            self.check_variable(node.var_name.value)    
 
         elif isinstance(node, FunctionNode):  # Функция (объявление)
             self.declare_function(
                 node.name_token,
                 node.return_type.value,
-                [(param[0].value, param[1].value) for param in node.parameters]
+                [(param.var_type.value, param.var_name.value) for param in node.parameters]
             )
             self.enter_scope()
             # Проверяем, является ли тело функции одиночным StatementNode или списком
@@ -76,7 +82,7 @@ class SemanticAnalyzer:
                 self.checkNode(node.body)  # Если body не StatementNode, просто проверяем его
             self.leave_scope()
 
-        elif isinstance(node, UseFuncNode):  # Вызовы функции
+        elif isinstance(node, UseFuncNode):  # Вызовы функции 
             self.check_function(
                 node.func_token.value,
                 [arg for arg in node.arguments]
