@@ -80,6 +80,7 @@ class ElseIfNode(ExpressionNode):
         self.keyword = keyword
         self.condition = condition
         self.body = []
+        self.else_branch = None
 
     def add_node(self, node: ExpressionNode):
         self.body.append(node)
@@ -146,3 +147,16 @@ class UseFuncNode(ExpressionNode):
         self.return_type = None
         self.func_token = func_token
         self.arguments = arguments
+
+class ForNode:
+    """Вспомогательный узел для блока (для хранения condition для for)"""
+    def __init__(self, init, condition, increment):
+        self.init = init
+        self.condition = condition
+        self.increment = increment
+
+
+class StreamManipulatorNode:
+    """Для std::endl"""
+    def __init__(self, token):
+        self.token = token
