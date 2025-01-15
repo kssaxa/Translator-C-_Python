@@ -71,10 +71,7 @@ class Parser:
                 self.consume('SEPARATOR', ';')
                 value_expr.return_type = type_token
                 value_expr.name_variable = name_token
-                if isinstance(value_expr, UseFuncNode):
-                    return value_expr
-                else:
-                    return VariableDeclarationNode(type_token, name_token, value_expr)
+                return VariableDeclarationNode(type_token, name_token, value_expr)
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == ';':
                 self.consume('SEPARATOR', ';')
                 return VariableDeclarationNode(type_token, name_token, None)
@@ -102,7 +99,7 @@ class Parser:
             if self.current_token().type == 'KEYWORD' and self.current_token().value in ('int', 'float', 'bool'):
                 param_type = self.consume('KEYWORD')
                 param_name = self.consume('IDENTIFIER')
-                params.append((param_type, param_name))
+                params.append(VariableDeclarationNode(param_type, param_name))
                 if self.current_token().type == 'SEPARATOR' and self.current_token().value == ',':
                     self.consume('SEPARATOR', ',')
             else:
@@ -119,11 +116,12 @@ class Parser:
     #Тело блоков if, else, while, for
     def parse_block(self):
         keyword = self.consume('BLOCK')
+        keyword_value = keyword.value
         block_node = BlockNode(keyword)
 
         # Обработка условия в скобках
         self.consume('SEPARATOR', '(')
-        condition = self.parse_expression()
+        condition = self.parse_expression(keyword=keyword_value)
         self.consume('SEPARATOR', ')')
         block_node.condition = condition
 
@@ -139,7 +137,8 @@ class Parser:
         if self.current_token().type == 'BLOCK' and self.current_token().value == 'else':
             self.consume('BLOCK', 'else')
             if self.current_token().type == 'BLOCK' and self.current_token().value == 'if':
-                return self.parse_else_if(block_node)
+                else_if = self.parse_else_if(block_node)
+                block_node.else_branch = else_if
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '{':
                 block_node.else_branch = self.parse_else()
 
@@ -147,7 +146,8 @@ class Parser:
 
     # Обработка else if
     def parse_else_if(self, parent_block):
-        keyword = self.consume('SEPARATOR', '(')
+        keyword = self.consume('BLOCK', 'if')
+        self.consume('SEPARATOR', '(')
         condition = self.parse_expression()
         self.consume('SEPARATOR', ')')
 
@@ -164,7 +164,7 @@ class Parser:
             self.consume('BLOCK', 'else')
             if self.current_token().type == 'BLOCK' and self.current_token().value == 'if':
                 else_if_node.else_branch = self.parse_else_if(parent_block)
-            else:
+            elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '{':
                 else_if_node.else_branch = self.parse_else()
 
         return else_if_node
@@ -200,7 +200,7 @@ class Parser:
         while True:
             if self.current_token().type == 'OPERATOR' and self.current_token().value in ('<<', '>>'):
                 self.consume('OPERATOR')
-                if self.current_token().type in ('IDENTIFIER', 'NUMBER', 'STRING'):
+                if self.current_token().type in ('IDENTIFIER', 'NUMBER', 'STRING', 'NEWLINE'):
                     argument = self.parse_expression()
                     output_node.add_argument(argument)
                 else:
@@ -232,13 +232,26 @@ class Parser:
         return FuncNode(func_token, arguments)
 
     # Для выражений
-    def parse_expression(self, precedence = 0):
-        left = self.parse_primary()
-        while self.current_token().type == 'OPERATOR'and self.get_precedence(self.current_token().value) >= precedence:
-            operator = self.consume('OPERATOR')
-            right = self.parse_expression(self.get_precedence(operator.value) + 1)  # увеличиваем приоритет для правой части
-            left = BinOperatorNode(operator, left, right)
-        return left
+    def parse_expression(self, precedence = 0, keyword = None):
+        if keyword == 'for':
+            init = self.parse_statement()
+
+            condition = self.parse_expression() 
+            self.consume('SEPARATOR', ';') 
+
+            increment = self.parse_expression()
+            return ForNode(init, condition, increment)
+        else:
+            left = self.parse_primary()
+            if self.current_token().type == 'OPERATOR' and self.current_token().value in ('++','--'):
+                operator = self.consume('OPERATOR')
+                left = UnarOperatorNode(operator, left)
+            else:
+                while self.current_token().type == 'OPERATOR' and self.current_token().value not in ('<<', '>>') and self.get_precedence(self.current_token().value) >= precedence:
+                    operator = self.consume('OPERATOR')
+                    right = self.parse_expression(self.get_precedence(operator.value) + 1)  # увеличиваем приоритет для правой части
+                    left = BinOperatorNode(operator, left, right)
+            return left
 
 
     # Числа, идентификаторы, строки и тд
@@ -269,6 +282,9 @@ class Parser:
             return expr
         elif current_token.type == 'STRING':
             return ValueNode(self.consume('STRING'))
+        elif current_token.type == ('NEWLINE') and self.current_token().value in ('std::endl','\n'):
+            newline_token = self.consume('NEWLINE')
+            return StreamManipulatorNode(newline_token)
         else:
             self.error(f"Unexpected token {current_token.type}")
 
@@ -305,6 +321,7 @@ class Parser:
 
     def error(self, message):
         raise SyntaxError(message)
+
 
 
 
@@ -389,7 +406,7 @@ def Sintaxize(tokens):
     #         print(f"{indent}Unknown node type: {type(node)}")
     #print_ast(ast)
 
-    def print_ast(node, level=0):
+        def print_ast(node, level=0):
         indent = "  " * level
         result = []
 
@@ -433,7 +450,7 @@ def Sintaxize(tokens):
             result.append(f"{indent}Function: {node.return_type.value} {node.name_token.value}")
             result.append(f"{indent}Parameters:")
             for param in node.parameters:
-                result.append(f"{indent}  {param[0].value} {param[1].value}")
+                result.append(f"{indent}  {param.var_type.value} {param.var_name.value}")
             result.append(f"{indent}Body:")
             result.extend(print_ast(node.body, level + 1))
         elif isinstance(node, ReturnNode):
@@ -455,4 +472,6 @@ def Sintaxize(tokens):
         return result
 
     return "\n".join(print_ast(ast)), ast, gener.output
+
+
 
