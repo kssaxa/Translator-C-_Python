@@ -111,7 +111,10 @@ class CodeGenerator:
             return out + end
         
         elif type(node) == UseFuncNode:
-            out = MARGIN * level + f'{node.func_token.value} ('
+            out = MARGIN * level
+            if node.name_variable is not None:
+                out += node.name_variable.value + ' = '
+            out += f'{node.func_token.value} ('
             for args in node.arguments:
                 out += self.genPythonNode(args, 0, ', ')
             out = out.rstrip(", ")
