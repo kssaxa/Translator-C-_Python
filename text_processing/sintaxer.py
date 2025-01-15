@@ -406,7 +406,7 @@ def Sintaxize(tokens):
     #         print(f"{indent}Unknown node type: {type(node)}")
     #print_ast(ast)
 
-        def print_ast(node, level=0):
+    def print_ast(node, level=0):
         indent = "  " * level
         result = []
 
