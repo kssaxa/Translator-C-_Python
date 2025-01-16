@@ -13,11 +13,11 @@ class Token(NamedTuple):
 TOKEN_SPECIFICATION = [
     ("PREPROCESSOR", r"#\s*\w+"),  # Директивы препроцессора
     ("NUMBER", r"\d+(\.\d*)?"),  # Числа
-    ("KEYWORD", r"int|float|return|void|bool"),  # Ключевые слова C++
-    ("BLOCK", r"if|else|while|for"),  # Блоки управления
+    ("KEYWORD", r"int|float|return|void|bool|const"),  # Ключевые слова C++
+    ("BLOCK", r"if|else|while|for|do"),  # Блоки управления
     ("BOOL", r"true|false"),  # Логические значения
     ("FUNC", r"std::cin|std::cout|std::printf|std::scanf|std::getline"),  # Функции ввода/вывода
-    ("NEWLINE", r"\n"),  # Перенос строки
+    ("NEWLINE", r"\n|std::endl"),  # Перенос строки
     ("IDENTIFIER", r"[a-zA-Z_][a-zA-Z0-9_]*"),  # Идентификаторы (имена переменных, функций)
     ("OPERATOR", r"\+\+|\-\-|==|!=|<=|>=|<<|>>|=|\+|\-|\*|/|<|>|%|\?|:"),  # Операторы
     ("STRING", r"\".*?\"|\'.*?\'"),  # Строки
