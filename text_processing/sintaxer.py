@@ -41,6 +41,11 @@ class Parser:
             return p_node
         elif current_token.type == 'FUNC':
             return self.parse_func_statement()
+        elif current_token.type == 'PREPROCESSOR':
+            self.consume('PREPROCESSOR')
+            self.consume('OPERATOR')
+            self.consume('IDENTIFIER')
+            self.consume('OPERATOR')
         else:
             self.error(f"Unexpected token {current_token.type}")
 
