@@ -109,12 +109,10 @@ class VariableDeclarationNode(ExpressionNode):
     """Узел для объявления переменной."""
 
     def __init__(self, var_type: Token, var_name: Token, value: ExpressionNode = None, is_const: bool = False):
-    def __init__(self, var_type: Token, var_name: Token, value: ExpressionNode = None, is_const: bool = False):
         super().__init__()
         self.var_type = var_type
         self.var_name = var_name
         self.value = value
-        self.is_const = is_const
         self.is_const = is_const
 
 
@@ -158,33 +156,12 @@ class ForNode:
         self.condition = condition
         self.increment = increment
         self.body = []
-        self.body = []
 
 
 class StreamManipulatorNode:
     """Для std::endl"""
     def __init__(self, token):
         self.token = token
-
-class ArrayDeclarationNode:
-    """Для объявления массивов"""
-    def __init__(self, var_type, var_name, size, elements):
-        self.var_type = var_type
-        self.var_name = var_name
-        self.size = size
-        self.elements = elements
-
-class ArrayAccessNode:
-    """Для использования массивов"""
-    def __init__(self, array_name, index_expression):
-        self.array_name = array_name
-        self.index_expression = index_expression
-
-class DoWhileNode:
-    """Для цикла do while"""
-    def __init__(self, body, condition):
-        self.body = body
-        self.condition = condition
 
 class ArrayDeclarationNode:
     """Для объявления массивов"""
