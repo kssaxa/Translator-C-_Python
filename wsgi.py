@@ -13,7 +13,7 @@ if __name__ == "__main__":
         "ip": local_ip
     }
 
-    with open("./static/js/ip_address.json", "w") as file:
+    with open("./ip_address.json", "w") as file:
         json.dump(local_ip_data, file)
 
     app.run(host=local_ip, port=8888)

@@ -31,6 +31,8 @@ class Parser:
                 return self.parse_block()
             elif current_token.value == 'else':
                 return self.parse_else()
+            elif current_token.value == 'do':
+                return self.parse_do_while()
             else:
                 self.error(f"Unexpected keyword in block {current_token.value}")
         elif current_token.type == 'KEYWORD' and current_token.value == 'return':
@@ -46,6 +48,10 @@ class Parser:
             self.consume('OPERATOR')
             self.consume('IDENTIFIER')
             self.consume('OPERATOR')
+        elif current_token.type == 'KEYWORD' and current_token.value == 'const':
+            self.consume('KEYWORD', 'const')
+            is_const = True
+            return self.parse_type_keyword(is_const)
         else:
             self.error(f"Unexpected token {current_token.type}")
 
@@ -62,26 +68,62 @@ class Parser:
         return statement_node
 
     # Разделение keyword на переменную и функции
-    def parse_type_keyword(self):
+    def parse_type_keyword(self, is_const = False):
         type_token = self.consume('KEYWORD')
         next_token = self.current_token()
 
         if next_token.type == 'IDENTIFIER':
             name_token = self.consume('IDENTIFIER')
+            declarations = []
             if self.current_token().type == 'SEPARATOR' and self.current_token().value == '(':
                 return self.parse_function(type_token, name_token)
             elif self.current_token().type == 'OPERATOR' and self.current_token().value == '=':
                 self.consume('OPERATOR', '=')
                 value_expr = self.parse_expression()
-                self.consume('SEPARATOR', ';')
                 value_expr.return_type = type_token
                 value_expr.name_variable = name_token
-                return VariableDeclarationNode(type_token, name_token, value_expr)
+                declarations.append(VariableDeclarationNode(type_token, name_token, value_expr, is_const))
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == ';':
-                self.consume('SEPARATOR', ';')
-                return VariableDeclarationNode(type_token, name_token, None)
+                declarations.append(VariableDeclarationNode(type_token, name_token, None, is_const))
+            elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '[':
+                self.consume('SEPARATOR', '[')
+                size_token = self.consume('NUMBER')
+                self.consume('SEPARATOR', ']')
+                if self.current_token().type == 'OPERATOR' and self.current_token().value == '=':
+                    self.consume('OPERATOR', '=')
+                    self.consume('SEPARATOR', '{')
+                    elements = []
+                    while self.current_token().type != 'SEPARATOR' or self.current_token().value != '}':
+                        elements.append(self.parse_expression())
+                        if self.current_token().type == 'SEPARATOR' and self.current_token().value == ',':
+                            self.consume('SEPARATOR', ',')
+                    self.consume('SEPARATOR', '}')
+                    self.consume('SEPARATOR', ';')
+                    return ArrayDeclarationNode(type_token, name_token, size_token, elements)
+                else:
+                    self.consume('SEPARATOR', ';')
+                    return ArrayDeclarationNode(type_token, name_token, size_token, None)
+
             else:
                 self.error("Unexpected token after variable name")
+
+            while self.current_token().type == 'SEPARATOR' and self.current_token().value == ',':
+                self.consume('SEPARATOR', ',')
+                name_token = self.consume('IDENTIFIER')
+                if self.current_token().type == 'OPERATOR' and self.current_token().value == '=':
+                    self.consume('OPERATOR', '=')
+                    value_expr = self.parse_expression()
+                    value_expr.return_type = type_token
+                    value_expr.name_variable = name_token
+                    declarations.append(VariableDeclarationNode(type_token, name_token, value_expr))
+                else:
+                    declarations.append(VariableDeclarationNode(type_token, name_token, None))
+
+            self.consume('SEPARATOR', ';')
+
+            if len(declarations) == 1:
+                return declarations[0]
+            return declarations
         else:
             self.error("Expected identifier after type keyword")
 
@@ -118,6 +160,24 @@ class Parser:
             self.consume('SEPARATOR', ';')
             return ReturnNode(return_expr)
 
+    def parse_do_while(self):
+        self.consume('BLOCK', 'do')
+        self.consume('SEPARATOR', '{')
+        body = []
+        while not (self.current_token().type == 'SEPARATOR' and self.current_token().value == '}'):
+            if self.current_token().type == 'NEWLINE':
+                self.consume('NEWLINE')
+            else:
+                body.append(self.parse_statement())
+        self.consume('SEPARATOR', '}')
+        self.consume('BLOCK', 'while')
+        self.consume('SEPARATOR', '(')
+        condition = self.parse_expression()
+        self.consume('SEPARATOR', ')')
+        self.consume('SEPARATOR', ';')
+
+        return DoWhileNode(body, condition)
+
     #Тело блоков if, else, while, for
     def parse_block(self):
         keyword = self.consume('BLOCK')
@@ -147,6 +207,7 @@ class Parser:
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '{':
                 block_node.else_branch = self.parse_else()
 
+        condition.body = block_node.body
         return block_node
 
     # Обработка else if
@@ -241,8 +302,8 @@ class Parser:
         if keyword == 'for':
             init = self.parse_statement()
 
-            condition = self.parse_expression() 
-            self.consume('SEPARATOR', ';') 
+            condition = self.parse_expression()
+            self.consume('SEPARATOR', ';')
 
             increment = self.parse_expression()
             return ForNode(init, condition, increment)
@@ -276,6 +337,11 @@ class Parser:
                         self.consume('SEPARATOR', ',')
                 self.consume('SEPARATOR', ')')
                 return UseFuncNode(func_name, arguments)
+            elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '[':
+                self.consume('SEPARATOR', '[')
+                index_expression = self.parse_expression()
+                self.consume('SEPARATOR', ']')
+                return ArrayAccessNode(func_name, index_expression)
             else:
                 return VariableUsageNode(func_name)
         elif current_token.type == 'BOOL':
@@ -329,87 +395,39 @@ class Parser:
 
 
 
-
 def Sintaxize(tokens):
+    parser_error = None
+    ast_error = None
+    gener_error = None
 
-    parser = Parser(tokens)
-    ast = parser.parse()
-    gener = CodeGenerator()
-    with open("testt.py", "w") as file:
-        file.write(gener.genPython(ast))
+    parser = None
+    ast = None
+    gener = None
 
-    #print(gener.genPython(ast))
-    # def print_ast(node, level=0):
-    #     indent = "  " * level
-    #     if isinstance(node, ValueNode):
-    #         print(f"{indent}Value: {node.value.value}")
-    #     elif isinstance(node, BinOperatorNode):
-    #         print(f"{indent}Binary Operator: {node.operator.value}")
-    #         print_ast(node.left, level + 1)
-    #         print_ast(node.right, level + 1)
-    #     elif isinstance(node, UnarOperatorNode):
-    #         print(f"{indent}Unary Operator: {node.operator.value}")
-    #         print_ast(node.operand, level + 1)
-    #     elif isinstance(node, BlockNode):
-    #         print(f"{indent}Block: {node.keyword.value}")
-    #         print(f"{indent}Condition:")
-    #         print_ast(node.condition, level + 1)
-    #         print(f"{indent}Body:")
-    #         for stmt in node.body:
-    #             print_ast(stmt, level + 1)
-    #         if node.else_branch:
-    #             print(f"{indent}Else:")
-    #             print_ast(node.else_branch, level + 1)
-    #     elif isinstance(node, ElseNode):
-    #         print(f"{indent}Else Block:")
-    #         for stmt in node.body:
-    #             print_ast(stmt, level + 1)
-    #     elif isinstance(node, ElseIfNode):
-    #         print(f"{indent}Else If:")
-    #         print_ast(node.condition, level + 1)
-    #         print(f"{indent}Body:")
-    #         for stmt in node.body:
-    #             print_ast(stmt, level + 1)
-    #         if node.else_branch:
-    #             print(f"{indent}Else:")
-    #             print_ast(node.else_branch, level + 1)
-    #     elif isinstance(node, StatementNode):
-    #         print(f"{indent}Statements:")
-    #         for stmt in node.statements:
-    #             print_ast(stmt, level + 1)
-    #     elif isinstance(node, FunctionNode):
-    #         print(f"{indent}Function: {node.return_type.value} {node.name_token.value}")
-    #         print(f"{indent}Parameters:")
-    #         for param in node.parameters:
-    #             print(f"{indent}  {param[0].value} {param[1].value}")
-    #         print(f"{indent}Body:")
-    #         print_ast(node.body, level + 1)
-    #     elif isinstance(node, ReturnNode):
-    #         print(f"{indent}Return:")
-    #         print_ast(node.keyword, level + 1)
-    #     elif isinstance(node, VariableDeclarationNode):
-    #         print(f"{indent}Variable Declaration: {node.var_type.value} {node.var_name.value}")
-    #         if node.value:
-    #             print(f"{indent}  Assigned value:")
-    #             print_ast(node.value, level + 1)
-    #     elif isinstance(node, VariableUsageNode):
-    #         print(f"{indent}Variable Usage: {node.var_name.value}")
-    #     elif isinstance(node, FuncNode):
-    #         print(f"{indent}Function Call: {node.func_token.value}")
-    #         for arg in node.arguments:
-    #             print(f"{indent}  Argument:")
-    #             print_ast(arg, level + 1)
-    #     elif isinstance(node, UseFuncNode):
-    #         if node.name_variable != None:
-    #             print(f"{indent}Variable Declaration: {node.return_type.value} {node.name_variable.value}")
-    #             print(f"{indent}Operation: =")
-    #         print(f"{indent}Function Call: {node.func_token.value}")
-    #         print(f"{indent}Arguments:")
-    #         for arg in node.arguments:
-    #             print_ast(arg, level + 1)
-    #     else:
-    #         print(f"{indent}Unknown node type: {type(node)}")
-    #print_ast(ast)
+
+    try:
+        parser = Parser(tokens)
+    except Exception as e:
+        parser_error = str(e)
+
+
+    try:
+        ast = parser.parse()
+    except Exception as e:
+        ast_error = str(e)
+
+    gener_error = None
+
+    try:
+        gener = CodeGenerator()
+        with open("test.py", "w") as file:
+            file.write(gener.genPython(ast))
+    except Exception as e:
+        gener_error = str(e)
+
+
+
+
 
     def print_ast(node, level=0):
         indent = "  " * level
@@ -476,7 +494,7 @@ def Sintaxize(tokens):
 
         return result
 
-    return "\n".join(print_ast(ast)), ast, gener.output
+    return "\n".join(print_ast(ast)), ast, gener.output, parser_error, ast_error, gener_error
 
 
 

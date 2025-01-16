@@ -37,7 +37,7 @@ class SemanticAnalyzer:
         if name in self.functions:
             raise NameError(f'Функция {name!r} уже объявлена')
         for param in parameters:
-            self.declare_variable(param[1], param[0]) 
+            self.declare_variable(param[1], param[0])
         self.functions[name] = {
             "return_type": return_type,
             "parameters": parameters,
@@ -50,7 +50,7 @@ class SemanticAnalyzer:
             if token.value == name:
                 func = details
                 break
-        
+
         if func is None:
             raise NameError(f'Функция {name!r} не определена')
         if len(arguments) != len(func["parameters"]):
@@ -65,7 +65,10 @@ class SemanticAnalyzer:
             pass
 
         elif isinstance(node, VariableUsageNode):
-            self.check_variable(node.var_name.value)    
+            if (node.var_name.value in ('break','continue')):
+                pass
+            else:
+                self.check_variable(node.var_name.value)
 
         elif isinstance(node, FunctionNode):  # Функция (объявление)
             self.declare_function(
@@ -77,12 +80,16 @@ class SemanticAnalyzer:
             # Проверяем, является ли тело функции одиночным StatementNode или списком
             if isinstance(node.body, StatementNode):
                 for statement in node.body.statements:  # Проходим по операторам внутри StatementNode
-                    self.checkNode(statement)
+                    if isinstance(statement, list):
+                        for substatement in statement:
+                            self.checkNode(substatement)
+                    else:
+                        self.checkNode(statement)
             else:
                 self.checkNode(node.body)  # Если body не StatementNode, просто проверяем его
             self.leave_scope()
 
-        elif isinstance(node, UseFuncNode):  # Вызовы функции 
+        elif isinstance(node, UseFuncNode):  # Вызовы функции
             self.check_function(
                 node.func_token.value,
                 [arg for arg in node.arguments]
