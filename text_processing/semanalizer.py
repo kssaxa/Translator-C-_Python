@@ -85,6 +85,11 @@ class SemanticAnalyzer:
                             self.checkNode(substatement)
                     else:
                         self.checkNode(statement)
+                    if isinstance(statement, list):
+                        for substatement in statement:
+                            self.checkNode(substatement)
+                    else:
+                        self.checkNode(statement)
             else:
                 self.checkNode(node.body)  # Если body не StatementNode, просто проверяем его
             self.leave_scope()
