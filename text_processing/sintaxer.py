@@ -31,6 +31,8 @@ class Parser:
                 return self.parse_block()
             elif current_token.value == 'else':
                 return self.parse_else()
+            elif current_token.value == 'do':
+                return self.parse_do_while()
             else:
                 self.error(f"Unexpected keyword in block {current_token.value}")
         elif current_token.type == 'KEYWORD' and current_token.value == 'return':
@@ -46,6 +48,10 @@ class Parser:
             self.consume('OPERATOR')
             self.consume('IDENTIFIER')
             self.consume('OPERATOR')
+        elif current_token.type == 'KEYWORD' and current_token.value == 'const':
+            self.consume('KEYWORD', 'const')
+            is_const = True
+            return self.parse_type_keyword(is_const)
         else:
             self.error(f"Unexpected token {current_token.type}")
 
@@ -62,26 +68,62 @@ class Parser:
         return statement_node
 
     # Разделение keyword на переменную и функции
-    def parse_type_keyword(self):
+    def parse_type_keyword(self, is_const = False):
         type_token = self.consume('KEYWORD')
         next_token = self.current_token()
 
         if next_token.type == 'IDENTIFIER':
             name_token = self.consume('IDENTIFIER')
+            declarations = []
             if self.current_token().type == 'SEPARATOR' and self.current_token().value == '(':
                 return self.parse_function(type_token, name_token)
             elif self.current_token().type == 'OPERATOR' and self.current_token().value == '=':
                 self.consume('OPERATOR', '=')
                 value_expr = self.parse_expression()
-                self.consume('SEPARATOR', ';')
                 value_expr.return_type = type_token
                 value_expr.name_variable = name_token
-                return VariableDeclarationNode(type_token, name_token, value_expr)
+                declarations.append(VariableDeclarationNode(type_token, name_token, value_expr, is_const))
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == ';':
-                self.consume('SEPARATOR', ';')
-                return VariableDeclarationNode(type_token, name_token, None)
+                declarations.append(VariableDeclarationNode(type_token, name_token, None, is_const))
+            elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '[':
+                self.consume('SEPARATOR', '[')
+                size_token = self.consume('NUMBER')
+                self.consume('SEPARATOR', ']')
+                if self.current_token().type == 'OPERATOR' and self.current_token().value == '=':
+                    self.consume('OPERATOR', '=')
+                    self.consume('SEPARATOR', '{')
+                    elements = []
+                    while self.current_token().type != 'SEPARATOR' or self.current_token().value != '}':
+                        elements.append(self.parse_expression())
+                        if self.current_token().type == 'SEPARATOR' and self.current_token().value == ',':
+                            self.consume('SEPARATOR', ',') 
+                    self.consume('SEPARATOR', '}')
+                    self.consume('SEPARATOR', ';')
+                    return ArrayDeclarationNode(type_token, name_token, size_token, elements)
+                else:
+                    self.consume('SEPARATOR', ';')
+                    return ArrayDeclarationNode(type_token, name_token, size_token, None)
+
             else:
                 self.error("Unexpected token after variable name")
+
+            while self.current_token().type == 'SEPARATOR' and self.current_token().value == ',':
+                self.consume('SEPARATOR', ',')
+                name_token = self.consume('IDENTIFIER')
+                if self.current_token().type == 'OPERATOR' and self.current_token().value == '=':
+                    self.consume('OPERATOR', '=')
+                    value_expr = self.parse_expression()
+                    value_expr.return_type = type_token
+                    value_expr.name_variable = name_token
+                    declarations.append(VariableDeclarationNode(type_token, name_token, value_expr))
+                else:
+                    declarations.append(VariableDeclarationNode(type_token, name_token, None))
+            
+            self.consume('SEPARATOR', ';')
+
+            if len(declarations) == 1:
+                return declarations[0]
+            return declarations
         else:
             self.error("Expected identifier after type keyword")
 
@@ -118,6 +160,24 @@ class Parser:
             self.consume('SEPARATOR', ';')
             return ReturnNode(return_expr)
 
+    def parse_do_while(self):
+        self.consume('BLOCK', 'do')
+        self.consume('SEPARATOR', '{') 
+        body = []
+        while not (self.current_token().type == 'SEPARATOR' and self.current_token().value == '}'):
+            if self.current_token().type == 'NEWLINE':
+                self.consume('NEWLINE')
+            else:
+                body.append(self.parse_statement())
+        self.consume('SEPARATOR', '}')
+        self.consume('BLOCK', 'while') 
+        self.consume('SEPARATOR', '(')  
+        condition = self.parse_expression()
+        self.consume('SEPARATOR', ')') 
+        self.consume('SEPARATOR', ';')
+
+        return DoWhileNode(body, condition)
+    
     #Тело блоков if, else, while, for
     def parse_block(self):
         keyword = self.consume('BLOCK')
@@ -147,6 +207,7 @@ class Parser:
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '{':
                 block_node.else_branch = self.parse_else()
 
+        condition.body = block_node.body
         return block_node
 
     # Обработка else if
@@ -276,6 +337,11 @@ class Parser:
                         self.consume('SEPARATOR', ',')
                 self.consume('SEPARATOR', ')')
                 return UseFuncNode(func_name, arguments)
+            elif self.current_token().type == 'SEPARATOR' and self.current_token().value == '[':
+                self.consume('SEPARATOR', '[')
+                index_expression = self.parse_expression() 
+                self.consume('SEPARATOR', ']') 
+                return ArrayAccessNode(func_name, index_expression)
             else:
                 return VariableUsageNode(func_name)
         elif current_token.type == 'BOOL':
@@ -477,6 +543,3 @@ def Sintaxize(tokens):
         return result
 
     return "\n".join(print_ast(ast)), ast, gener.output
-
-
-
