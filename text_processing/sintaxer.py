@@ -33,8 +33,6 @@ class Parser:
                 return self.parse_else()
             elif current_token.value == 'do':
                 return self.parse_do_while()
-            elif current_token.value == 'do':
-                return self.parse_do_while()
             else:
                 self.error(f"Unexpected keyword in block {current_token.value}")
         elif current_token.type == 'KEYWORD' and current_token.value == 'return':
@@ -50,10 +48,6 @@ class Parser:
             self.consume('OPERATOR')
             self.consume('IDENTIFIER')
             self.consume('OPERATOR')
-        elif current_token.type == 'KEYWORD' and current_token.value == 'const':
-            self.consume('KEYWORD', 'const')
-            is_const = True
-            return self.parse_type_keyword(is_const)
         elif current_token.type == 'KEYWORD' and current_token.value == 'const':
             self.consume('KEYWORD', 'const')
             is_const = True
@@ -75,13 +69,11 @@ class Parser:
 
     # Разделение keyword на переменную и функции
     def parse_type_keyword(self, is_const = False):
-    def parse_type_keyword(self, is_const = False):
         type_token = self.consume('KEYWORD')
         next_token = self.current_token()
 
         if next_token.type == 'IDENTIFIER':
             name_token = self.consume('IDENTIFIER')
-            declarations = []
             declarations = []
             if self.current_token().type == 'SEPARATOR' and self.current_token().value == '(':
                 return self.parse_function(type_token, name_token)
@@ -90,7 +82,6 @@ class Parser:
                 value_expr = self.parse_expression()
                 value_expr.return_type = type_token
                 value_expr.name_variable = name_token
-                declarations.append(VariableDeclarationNode(type_token, name_token, value_expr, is_const))
                 declarations.append(VariableDeclarationNode(type_token, name_token, value_expr, is_const))
             elif self.current_token().type == 'SEPARATOR' and self.current_token().value == ';':
                 declarations.append(VariableDeclarationNode(type_token, name_token, None, is_const))
